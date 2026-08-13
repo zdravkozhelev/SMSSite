@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { createAndSendVerificationToken } from "@/lib/verification";
 
 const registerSchema = z.object({
   companyName: z.string().min(2),
@@ -33,7 +34,7 @@ export async function registerClient(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name,
@@ -47,7 +48,20 @@ export async function registerClient(formData: FormData) {
     },
   });
 
+  await createAndSendVerificationToken(user.id, user.email);
+
   // No subscription/limit is created here — the admin assigns an SMS
   // limit for the client afterwards from the admin panel.
   redirect("/login?registered=1");
+}
+
+export async function resendVerificationEmail(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user || user.emailVerified) {
+    // Don't reveal whether the account exists or is already verified.
+    return { success: "Ако имейлът съществува, изпратихме нов линк за потвърждение." };
+  }
+
+  await createAndSendVerificationToken(user.id, user.email);
+  return { success: "Изпратихме нов линк за потвърждение на имейла ви." };
 }

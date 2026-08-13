@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
+import { resendVerificationEmail } from "@/lib/actions/auth";
 
 function LoginForm() {
   const router = useRouter();
@@ -15,11 +16,15 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setNeedsVerification(false);
+    setResendStatus(null);
     setLoading(true);
 
     const result = await signIn("credentials", {
@@ -29,6 +34,11 @@ function LoginForm() {
     });
 
     setLoading(false);
+
+    if (result?.code === "email_not_verified") {
+      setNeedsVerification(true);
+      return;
+    }
 
     if (result?.error) {
       setError("Грешен имейл или парола.");
@@ -43,6 +53,12 @@ function LoginForm() {
     router.refresh();
   }
 
+  async function handleResend() {
+    setResendStatus("Изпращане...");
+    const result = await resendVerificationEmail(email);
+    setResendStatus(result.success);
+  }
+
   return (
     <div className="flex min-h-screen flex-1 items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -53,7 +69,7 @@ function LoginForm() {
 
         {justRegistered && (
           <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
-            Регистрацията е успешна. Влезте с новия си акаунт.
+            Регистрацията е успешна. Проверете имейла си, за да потвърдите акаунта.
           </p>
         )}
 
@@ -80,6 +96,20 @@ function LoginForm() {
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
+
+          {needsVerification && (
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <p>Имейлът ви не е потвърден. Проверете пощата си за линк.</p>
+              <button
+                type="button"
+                onClick={handleResend}
+                className="mt-1 font-medium underline hover:no-underline"
+              >
+                Изпрати нов линк
+              </button>
+              {resendStatus && <p className="mt-1 text-xs">{resendStatus}</p>}
+            </div>
+          )}
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Влизане..." : "Вход"}
