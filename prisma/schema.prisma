@@ -1,0 +1,167 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+}
+
+enum MessageStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  FAILED
+}
+
+enum RecipientStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(CLIENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  client Client?
+}
+
+model Client {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName      String
+  phone            String?
+  stripeCustomerId String?  @unique
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  subscriptions Subscription[]
+  contactGroups ContactGroup[]
+  messages      Message[]
+  reminderRule  ReminderRule?
+}
+
+model Plan {
+  id            String   @id @default(cuid())
+  name          String
+  smsLimit      Int
+  priceCents    Int
+  stripePriceId String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  clientId             String
+  client               Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  planId               String
+  plan                 Plan               @relation(fields: [planId], references: [id])
+  stripeSubscriptionId String?            @unique
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime           @default(now())
+  currentPeriodEnd     DateTime
+  smsUsed              Int                @default(0)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([clientId])
+}
+
+model ContactGroup {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  contacts Contact[]
+  messages Message[]
+}
+
+model Contact {
+  id                  String       @id @default(cuid())
+  groupId             String
+  group               ContactGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  phone               String
+  name                String?
+  carPlate            String?
+  inspectionDate      DateTime?
+  reminderSentForDate DateTime?
+  createdAt           DateTime     @default(now())
+
+  recipients MessageRecipient[]
+
+  @@index([groupId])
+}
+
+model ReminderRule {
+  id         String   @id @default(cuid())
+  clientId   String   @unique
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  body       String
+  daysBefore Int      @default(14)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  groupId     String?
+  group       ContactGroup? @relation(fields: [groupId], references: [id])
+  body        String
+  status      MessageStatus @default(DRAFT)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  recipients MessageRecipient[]
+
+  @@index([clientId])
+  @@index([status, scheduledAt])
+}
+
+model MessageRecipient {
+  id                String          @id @default(cuid())
+  messageId         String
+  message           Message         @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  contactId         String
+  contact           Contact         @relation(fields: [contactId], references: [id])
+  status            RecipientStatus @default(PENDING)
+  providerMessageId String?
+  error             String?
+  sentAt            DateTime?
+
+  @@index([messageId])
+}
