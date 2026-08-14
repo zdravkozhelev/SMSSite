@@ -7,11 +7,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input, Label } from "@/components/ui/input";
 import { resendVerificationEmail } from "@/lib/actions/auth";
+import { ForgotPasswordModal } from "./forgot-password-modal";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "1";
+  const justReset = searchParams.get("reset") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +21,7 @@ function LoginForm() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resendStatus, setResendStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,6 +76,12 @@ function LoginForm() {
           </p>
         )}
 
+        {justReset && (
+          <p className="mt-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+            Паролата е сменена успешно. Влезте с новата парола.
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
             <Label htmlFor="email">Имейл</Label>
@@ -93,6 +102,13 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="mt-1 text-xs font-medium text-brand hover:underline"
+            >
+              Забравена парола?
+            </button>
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
@@ -123,6 +139,10 @@ function LoginForm() {
           </Link>
         </p>
       </div>
+
+      {showForgotPassword && (
+        <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />
+      )}
     </div>
   );
 }

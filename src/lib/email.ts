@@ -32,3 +32,28 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
     `,
   });
 }
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string) {
+  if (!resend) {
+    console.log(`[email disabled] Password reset link for ${to}: ${resetUrl}`);
+    return;
+  }
+
+  await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Смяна на парола — TogetherSMS",
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>Заявка за нова парола</h2>
+        <p>Получихме заявка за смяна на паролата на акаунта ви в TogetherSMS.</p>
+        <p>
+          <a href="${resetUrl}" style="display: inline-block; background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
+            Задай нова парола
+          </a>
+        </p>
+        <p style="color: #64748b; font-size: 13px;">Линкът е валиден 1 час. Ако не сте заявявали смяна на парола, игнорирайте това съобщение.</p>
+      </div>
+    `,
+  });
+}
