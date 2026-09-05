@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
+import { ContactFlipButton } from "@/components/contact-flip-button";
 
 export default function PricingPage() {
   return (
@@ -14,15 +13,8 @@ export default function PricingPage() {
           определят индивидуално според нуждите ви. Свържете се с нас и ще
           подготвим оферта, съобразена с вашия обем клиенти.
         </p>
-        <div className="mt-8 flex justify-center gap-4">
-          <a href="mailto:info@togethersms.bg">
-            <Button className="px-6 py-3 text-base">Свържете се за цена</Button>
-          </a>
-          <Link href="/register">
-            <Button variant="outline" className="px-6 py-3 text-base">
-              Регистрация
-            </Button>
-          </Link>
+        <div className="mt-8 flex justify-center">
+          <ContactFlipButton />
         </div>
       </section>
 

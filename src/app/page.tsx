@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,29 @@ export default function Home() {
                 Започнете сега
               </Button>
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#0B1B2B] px-6 pb-24">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 sm:flex-row sm:items-stretch sm:justify-center">
+          <div className="overflow-hidden rounded-2xl shadow-lg sm:w-1/2">
+            <Image
+              src="/images/before-reminder.png"
+              alt="Собственик на пункт се опитва да си спомни кога изтича прегледът на клиент"
+              width={800}
+              height={533}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="overflow-hidden rounded-2xl shadow-lg sm:w-1/2">
+            <Image
+              src="/images/after-reminder.png"
+              alt="Клиент получава автоматично SMS напомняне за изтичащ технически преглед"
+              width={800}
+              height={533}
+              className="h-full w-full object-cover"
+            />
           </div>
         </div>
       </section>
