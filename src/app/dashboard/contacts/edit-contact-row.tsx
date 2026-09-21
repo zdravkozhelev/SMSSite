@@ -18,12 +18,27 @@ function toDateInputValue(date: Date | null) {
   return date.toISOString().slice(0, 10);
 }
 
-export function EditContactRow({ contact }: { contact: Contact }) {
+export function EditContactRow({
+  contact,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
+}: {
+  contact: Contact;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+}) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
       <tr className="border-b border-slate-50 last:border-0">
+        {selectable && (
+          <td className="px-4 py-3">
+            <input type="checkbox" checked={selected} onChange={onToggleSelect} />
+          </td>
+        )}
         <td className="px-4 py-3 text-slate-900">{contact.phone}</td>
         <td className="px-4 py-3 text-slate-600">{contact.name ?? "—"}</td>
         <td className="px-4 py-3 text-slate-600">{contact.carPlate ?? "—"}</td>

@@ -42,7 +42,7 @@ export function AddContactForm() {
         <Input id="inspectionDate" name="inspectionDate" type="date" />
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-slate-700">
+      <label className="hidden items-center gap-2 text-sm text-slate-700">
         <input
           type="checkbox"
           name="sendWelcome"

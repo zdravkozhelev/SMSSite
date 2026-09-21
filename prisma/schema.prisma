@@ -81,6 +81,7 @@ model Client {
   phone            String?
   stripeCustomerId String?  @unique
   status           String   @default("active")
+  canSendBulkMessages Boolean @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

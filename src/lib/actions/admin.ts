@@ -59,6 +59,18 @@ export async function updateClientLimit(clientId: string, formData: FormData) {
   revalidatePath("/admin/clients");
 }
 
+export async function updateBulkMessagingAccess(clientId: string, formData: FormData) {
+  await requireAdmin();
+  const canSendBulkMessages = formData.get("canSendBulkMessages") === "on";
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { canSendBulkMessages },
+  });
+
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
 export async function suspendClient(clientId: string, status: "active" | "suspended") {
   await requireAdmin();
   await prisma.client.update({ where: { id: clientId }, data: { status } });

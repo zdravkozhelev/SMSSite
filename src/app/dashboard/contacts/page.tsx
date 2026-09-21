@@ -1,6 +1,6 @@
 import { requireClient } from "@/lib/actions/client";
 import { prisma } from "@/lib/db";
-import { EditContactRow } from "./edit-contact-row";
+import { ContactsTable } from "./contacts-table";
 import { SearchBox } from "./search-box";
 
 export default async function ContactsPage({
@@ -42,22 +42,7 @@ export default async function ContactsPage({
             {query ? "Няма намерени клиенти." : "Все още нямате добавени клиенти."}
           </p>
         ) : (
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-100 text-slate-500">
-              <tr>
-                <th className="px-4 py-2 font-medium">Телефон</th>
-                <th className="px-4 py-2 font-medium">Име</th>
-                <th className="px-4 py-2 font-medium">Рег. номер</th>
-                <th className="px-4 py-2 font-medium">Дата на преглед</th>
-                <th className="px-4 py-2 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {contacts.map((c) => (
-                <EditContactRow key={c.id} contact={c} />
-              ))}
-            </tbody>
-          </table>
+          <ContactsTable contacts={contacts} canSendBulkMessages={client.canSendBulkMessages} />
         )}
       </div>
     </div>

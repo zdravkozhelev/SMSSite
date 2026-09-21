@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { suspendClient, updateClientLimit } from "@/lib/actions/admin";
+import {
+  suspendClient,
+  updateClientLimit,
+  updateBulkMessagingAccess,
+} from "@/lib/actions/admin";
 import { getActiveSubscription } from "@/lib/subscription";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +88,26 @@ export default async function AdminClientDetailPage({
             {activeSub ? activeSub.currentPeriodEnd.toLocaleDateString("bg-BG") : "—"}
           </p>
         </div>
+      </div>
+
+      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6">
+        <p className="text-sm text-slate-500">Групови съобщения</p>
+        <form
+          action={updateBulkMessagingAccess.bind(null, client.id)}
+          className="mt-2 flex items-center gap-3"
+        >
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              name="canSendBulkMessages"
+              defaultChecked={client.canSendBulkMessages}
+            />
+            Клиентът може да изпраща групови съобщения
+          </label>
+          <Button type="submit" variant="outline" className="px-3 py-2 text-sm">
+            Запази
+          </Button>
+        </form>
       </div>
 
       <h2 className="mt-10 text-lg font-semibold text-slate-900">История на съобщенията</h2>

@@ -121,6 +121,61 @@ export async function deleteContact(contactId: string) {
   revalidatePath("/dashboard/contacts");
 }
 
+export async function sendBulkMessage(contactIds: string[], formData: FormData) {
+  const client = await requireClient();
+  if (!client.canSendBulkMessages) {
+    throw new Error("Forbidden");
+  }
+
+  const body = z.string().min(1).max(918).parse(formData.get("body"));
+
+  if (contactIds.length === 0) {
+    return { error: "Не са избрани контакти." };
+  }
+
+  const contacts = await prisma.contact.findMany({
+    where: { id: { in: contactIds }, group: { clientId: client.id } },
+  });
+
+  if (contacts.length === 0) {
+    return { error: "Не са избрани контакти." };
+  }
+
+  let sentCount = 0;
+  let limitHit = false;
+
+  for (const contact of contacts) {
+    const message = await prisma.message.create({
+      data: {
+        clientId: client.id,
+        groupId: contact.groupId,
+        body: fillTemplate(body, contact),
+        status: "DRAFT",
+        recipients: { create: [{ contactId: contact.id }] },
+      },
+    });
+
+    try {
+      const result = await processMessageSend(message.id);
+      sentCount += result.sentCount;
+    } catch (err) {
+      if (err instanceof SmsLimitExceededError) {
+        limitHit = true;
+        break;
+      }
+    }
+  }
+
+  revalidatePath("/dashboard/contacts");
+
+  if (limitHit) {
+    return {
+      success: `Изпратено до ${sentCount} от ${contacts.length} контакта — достигнат е лимитът SMS, останалите не бяха изпратени.`,
+    };
+  }
+  return { success: `Изпратено до ${sentCount} от ${contacts.length} контакта.` };
+}
+
 const reminderRuleSchema = z.object({
   body: z.string().min(1).max(918),
   daysBefore: z.coerce.number().int().min(1).max(90),
