@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { sendBulkMessage } from "@/lib/actions/client";
 import { Button } from "@/components/ui/button";
+import { calculateSmsSegments } from "@/lib/sms/segments";
+import { SmsSegmentModal } from "@/components/sms-segment-modal";
 import { EditContactRow } from "./edit-contact-row";
 
 type Contact = {
@@ -23,6 +25,22 @@ export function ContactsTable({
   canSendBulkMessages: boolean;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [body, setBody] = useState("");
+  const [segmentWarning, setSegmentWarning] = useState<number | null>(null);
+  const lastWarnedSegments = useRef(1);
+
+  const { segments } = calculateSmsSegments(body);
+
+  function handleBodyChange(value: string) {
+    setBody(value);
+    const { segments: newSegments } = calculateSmsSegments(value);
+    if (newSegments > 1 && newSegments !== lastWarnedSegments.current) {
+      setSegmentWarning(newSegments);
+      lastWarnedSegments.current = newSegments;
+    } else if (newSegments <= 1) {
+      lastWarnedSegments.current = 1;
+    }
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -41,7 +59,11 @@ export function ContactsTable({
 
   async function action(_prev: FormState, formData: FormData): Promise<FormState> {
     const result = await sendBulkMessage(Array.from(selected), formData);
-    if (result?.success) setSelected(new Set());
+    if (result?.success) {
+      setSelected(new Set());
+      setBody("");
+      lastWarnedSegments.current = 1;
+    }
     return result ?? {};
   }
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
@@ -93,9 +115,23 @@ export function ContactsTable({
               required
               maxLength={918}
               rows={4}
+              value={body}
+              onChange={(e) => handleBodyChange(e.target.value)}
               placeholder="Здравейте, {name}! ..."
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
             />
+            <p className="text-xs text-slate-400">
+              {body.length}/918 символа
+              {segments > 1 && (
+                <span className="text-amber-600"> — ще се изпрати като {segments} SMS</span>
+              )}
+            </p>
+            {segmentWarning !== null && (
+              <SmsSegmentModal
+                segments={segmentWarning}
+                onClose={() => setSegmentWarning(null)}
+              />
+            )}
             {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
             {state?.success && <p className="text-sm text-green-600">{state.success}</p>}
             <Button type="submit" disabled={pending || selected.size === 0}>
