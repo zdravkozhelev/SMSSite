@@ -8,7 +8,7 @@ const CYRILLIC_PATTERN = /[Ѐ-ӿ]/;
  */
 export function calculateSmsSegments(text: string) {
   const isCyrillic = CYRILLIC_PATTERN.test(text);
-  const unit = isCyrillic ? 70 : 140;
+  const unit = isCyrillic ? 70 : 160;
   const segments = text.length === 0 ? 1 : Math.ceil(text.length / unit);
   return { segments, unit, isCyrillic };
 }
